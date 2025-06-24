@@ -1,5 +1,6 @@
 package com.xperia.xpense_consumer.consumer;
 
+import com.xperia.xpense_consumer.models.MutualFundScheme;
 import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -18,7 +19,7 @@ public class XpenseConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XpenseConsumer.class);
     private final Properties consumerProperties;
-    private KafkaConsumer<String, String> consumer;
+    private KafkaConsumer<String, MutualFundScheme> consumer;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private volatile boolean running = true;
 
@@ -33,8 +34,9 @@ public class XpenseConsumer {
         executorService.submit(() -> {
             try{
                 while (running){
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
-                    for (ConsumerRecord<String, String> record : records){
+                    ConsumerRecords<String, MutualFundScheme> records = consumer.poll(Duration.ofMillis(1000));
+                    for (ConsumerRecord<String, MutualFundScheme> record : records){
+                        record.value();
                         LOGGER.info("Consumed message = topic : {} \n partition : {} \n offset : {} \n key: {} \n value : {}",
                                 record.topic(), record.partition(), record.offset(), record.key(), record.value());
                     }
