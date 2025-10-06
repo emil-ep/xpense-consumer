@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: xpense-consumer
+  datasource:
+    url: jdbc:postgresql://localhost:5432/xpense_tracker
+    username: xpense_admin
+    password: xpenseTracker1234
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: 8089

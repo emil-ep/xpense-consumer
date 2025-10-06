@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,12 +33,12 @@ public class XpenseConsumer {
     public void start(){
         consumer = new KafkaConsumer<>(consumerProperties);
         consumer.subscribe(Collections.singletonList("mf_scheme"));
+        List<MutualFundScheme> list = new ArrayList<>();
         executorService.submit(() -> {
             try{
                 while (running){
                     ConsumerRecords<String, MutualFundScheme> records = consumer.poll(Duration.ofMillis(1000));
                     for (ConsumerRecord<String, MutualFundScheme> record : records){
-                        record.value();
                         LOGGER.info("Consumed message = topic : {} \n partition : {} \n offset : {} \n key: {} \n value : {}",
                                 record.topic(), record.partition(), record.offset(), record.key(), record.value());
                     }
