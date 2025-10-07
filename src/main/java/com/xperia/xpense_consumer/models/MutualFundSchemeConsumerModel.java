@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MutualFundScheme implements Serializable {
+public class MutualFundSchemeConsumerModel implements Serializable {
 
     private String schemeCode;
 

@@ -1,6 +1,7 @@
 package com.xperia.xpense_consumer.consumer;
 
-import com.xperia.xpense_consumer.models.MutualFundScheme;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xperia.xpense_consumer.models.MutualFundSchemeConsumerModel;
 import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -21,24 +22,33 @@ public class XpenseConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XpenseConsumer.class);
     private final Properties consumerProperties;
-    private KafkaConsumer<String, MutualFundScheme> consumer;
+    private KafkaConsumer<String, String> consumer;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private volatile boolean running = true;
+    private final ObjectMapper objectMapper;
 
     public XpenseConsumer(Properties kafkaConsumerProperties){
         this.consumerProperties = kafkaConsumerProperties;
+        this.objectMapper = new ObjectMapper();
     }
 
     @PostConstruct
     public void start(){
         consumer = new KafkaConsumer<>(consumerProperties);
         consumer.subscribe(Collections.singletonList("mf_scheme"));
-        List<MutualFundScheme> list = new ArrayList<>();
+        List<MutualFundSchemeConsumerModel> list = new ArrayList<>();
         executorService.submit(() -> {
             try{
                 while (running){
-                    ConsumerRecords<String, MutualFundScheme> records = consumer.poll(Duration.ofMillis(1000));
-                    for (ConsumerRecord<String, MutualFundScheme> record : records){
+                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+                    for (ConsumerRecord<String, String> record : records){
+                        try {
+                            String json = record.value();
+                            MutualFundSchemeConsumerModel model =
+                                    objectMapper.readValue(json, MutualFundSchemeConsumerModel.class);
+                        } catch (Exception e) {
+                            LOGGER.error("Failed to parse record : {}", record.value(), e);
+                        }
                         LOGGER.info("Consumed message = topic : {} \n partition : {} \n offset : {} \n key: {} \n value : {}",
                                 record.topic(), record.partition(), record.offset(), record.key(), record.value());
                     }
