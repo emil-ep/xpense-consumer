@@ -1,8 +1,6 @@
 package com.xperia.xpense_consumer.models.entity;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,9 +11,6 @@ import lombok.NoArgsConstructor;
 public class MutualFundScheme {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
-
     private String code;
 
     private String name;
