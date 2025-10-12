@@ -21,12 +21,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-public class XpenseConsumer {
+public class MutualFundSchemeConsumer {
 
     @Autowired
     private MutualFundSchemeService mutualFundSchemeService;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(XpenseConsumer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MutualFundSchemeConsumer.class);
     private final Properties consumerProperties;
     private KafkaConsumer<String, String> consumer;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -35,7 +35,7 @@ public class XpenseConsumer {
     private final static long BATCH_SIZE = 1000;
 
 
-    public XpenseConsumer(Properties kafkaConsumerProperties){
+    public MutualFundSchemeConsumer(Properties kafkaConsumerProperties){
         this.consumerProperties = kafkaConsumerProperties;
         this.objectMapper = new ObjectMapper();
     }
