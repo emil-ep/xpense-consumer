@@ -7,6 +7,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+import org.xperia.models.MutualFundDetailModel;
+import org.xperia.models.MutualFundSchemeConsumerModel;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -22,9 +25,11 @@ public class MutualFundDetailConsumer {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final Logger LOGGER = LoggerFactory.getLogger(MutualFundDetailConsumer.class);
     private static final List<String> TOPICS_TO_CONSUME = Arrays.asList("scheme_detail");
+    private final RestTemplate restTemplate;
 
-    public MutualFundDetailConsumer(Properties kafkaConsumerProperties){
+    public MutualFundDetailConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate){
         this.consumer = new KafkaConsumer<>(kafkaConsumerProperties);
+        this.restTemplate = restTemplate;
     }
 
     @PostConstruct
@@ -36,6 +41,7 @@ public class MutualFundDetailConsumer {
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
                     for (ConsumerRecord<String, String> record: records){
                         String schemeCode = record.value();
+                        MutualFundDetailModel response = restTemplate.getForObject("", MutualFundDetailModel.class);
                         LOGGER.info("Received scheme : {}", schemeCode);
                     }
                 }
