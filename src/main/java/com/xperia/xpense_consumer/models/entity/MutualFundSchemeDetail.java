@@ -1,11 +1,12 @@
 package com.xperia.xpense_consumer.models.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import java.sql.Types;
 
 @Entity(name = "mf_scheme_detail")
 @NoArgsConstructor
@@ -26,11 +27,16 @@ public class MutualFundSchemeDetail {
 
     private String name;
 
-    public MutualFundSchemeDetail(String code, String type, String category, String fundHouse, String name){
+    @JdbcTypeCode(Types.OTHER)
+    @Column(columnDefinition = "jsonb")
+    private JsonNode payload;
+
+    public MutualFundSchemeDetail(String code, String type, String category, String fundHouse, String name, JsonNode payload){
         this.code = code;
         this.type = type;
         this.category = category;
         this.fundHouse = fundHouse;
         this.name = name;
+        this.payload = payload;
     }
 }

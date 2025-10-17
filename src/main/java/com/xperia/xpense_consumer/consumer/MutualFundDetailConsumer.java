@@ -1,5 +1,6 @@
 package com.xperia.xpense_consumer.consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.xperia.models.MutualFundDetailModel;
-import org.xperia.models.MutualFundSchemeConsumerModel;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -26,10 +26,12 @@ public class MutualFundDetailConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(MutualFundDetailConsumer.class);
     private static final List<String> TOPICS_TO_CONSUME = Arrays.asList("scheme_detail");
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     public MutualFundDetailConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate){
         this.consumer = new KafkaConsumer<>(kafkaConsumerProperties);
         this.restTemplate = restTemplate;
+        this.objectMapper = new ObjectMapper();
     }
 
     @PostConstruct
@@ -41,7 +43,15 @@ public class MutualFundDetailConsumer {
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
                     for (ConsumerRecord<String, String> record: records){
                         String schemeCode = record.value();
-                        MutualFundDetailModel response = restTemplate.getForObject("", MutualFundDetailModel.class);
+                        String url = "https://api.mfapi.in/mf/" + schemeCode;
+                        MutualFundDetailModel response = restTemplate.getForObject("https://api.mfapi.in/mf/118621", MutualFundDetailModel.class);
+//                        MutualFundSchemeDetail  fundSchemeDetail = new MutualFundSchemeDetail(response.getSchemeCode(),
+//                                response.getSchemeType(),
+//                                response.getSchemeCategory(),
+//                                response.getFundHouse(),
+//                                response.getSchemeName(),
+//                                this.objectMapper.valueToTree(response.getData())
+//                        );
                         LOGGER.info("Received scheme : {}", schemeCode);
                     }
                 }
