@@ -1,25 +1,31 @@
 package com.xperia.xpense_consumer.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xperia.xpense_consumer.models.entity.MutualFundSchemeDetail;
+import com.xperia.xpense_consumer.service.MutualFundSchemeDetailService;
 import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.xperia.models.MutualFundDetailModel;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class MutualFundDetailConsumer {
+
+    @Autowired
+    private MutualFundSchemeDetailService schemeDetailService;
 
     private final KafkaConsumer<String, String> consumer;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -27,11 +33,17 @@ public class MutualFundDetailConsumer {
     private static final List<String> TOPICS_TO_CONSUME = Arrays.asList("scheme_detail");
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final List<MutualFundSchemeDetail> schemeDetails;
+    private static final int SCHEME_SAVE_THRESHOLD = 500;
+    private static final long FLUSH_INTERVAL_MS = 5000;
 
     public MutualFundDetailConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate){
         this.consumer = new KafkaConsumer<>(kafkaConsumerProperties);
         this.restTemplate = restTemplate;
         this.objectMapper = new ObjectMapper();
+        this.schemeDetails = Collections.synchronizedList(new ArrayList<>());
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(this::flushAfterTTL, FLUSH_INTERVAL_MS, FLUSH_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     @PostConstruct
@@ -45,13 +57,14 @@ public class MutualFundDetailConsumer {
                         String schemeCode = record.value();
                         String url = "https://api.mfapi.in/mf/" + schemeCode;
                         MutualFundDetailModel response = restTemplate.getForObject("https://api.mfapi.in/mf/118621", MutualFundDetailModel.class);
-//                        MutualFundSchemeDetail  fundSchemeDetail = new MutualFundSchemeDetail(response.getSchemeCode(),
-//                                response.getSchemeType(),
-//                                response.getSchemeCategory(),
-//                                response.getFundHouse(),
-//                                response.getSchemeName(),
-//                                this.objectMapper.valueToTree(response.getData())
-//                        );
+                        MutualFundSchemeDetail fundSchemeDetail = new MutualFundSchemeDetail(response.getMeta().getSchemeCode(),
+                                response.getMeta().getSchemeType(),
+                                response.getMeta().getSchemeCategory(),
+                                response.getMeta().getFundHouse(),
+                                response.getMeta().getSchemeName(),
+                                this.objectMapper.valueToTree(response.getData())
+                        );
+                        createSchemeDetailBatch(fundSchemeDetail);
                         LOGGER.info("Received scheme : {}", schemeCode);
                     }
                 }
@@ -60,10 +73,40 @@ public class MutualFundDetailConsumer {
                         TOPICS_TO_CONSUME
                         .stream()
                         .reduce((topic1, topic2) -> topic1.concat(",")));
-            }finally {
-                shutdown();
             }
         });
+    }
+
+    private void createSchemeDetailBatch(MutualFundSchemeDetail schemeDetail){
+        synchronized (schemeDetails){
+            this.schemeDetails.add(schemeDetail);
+            if (this.schemeDetails.size() >=  SCHEME_SAVE_THRESHOLD){
+                flush();
+            }
+        }
+    }
+
+    private synchronized void flush() {
+        if (this.schemeDetails.isEmpty()) return;
+
+        List<MutualFundSchemeDetail> schemeToSave = new ArrayList<>(schemeDetails);
+        schemeDetails.clear();
+
+        try{
+            this.schemeDetailService.saveAll(schemeToSave);
+            LOGGER.info("saved a batch of schemeDetails, size : {}", schemeToSave.size());
+        } catch (Exception ex){
+            LOGGER.error("Failed to save a batch of schemeDetails ", ex);
+        }
+    }
+
+    private synchronized void flushAfterTTL(){
+        synchronized (this.schemeDetails){
+            if (!this.schemeDetails.isEmpty()){
+                flush();
+            }
+        }
+
     }
 
     public void shutdown(){
