@@ -14,9 +14,6 @@ import java.sql.Types;
 public class MutualFundSchemeDetail {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
-
     private String code;
 
     private String type;

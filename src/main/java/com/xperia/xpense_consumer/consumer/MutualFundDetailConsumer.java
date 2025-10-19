@@ -3,78 +3,69 @@ package com.xperia.xpense_consumer.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xperia.xpense_consumer.models.entity.MutualFundSchemeDetail;
 import com.xperia.xpense_consumer.service.MutualFundSchemeDetailService;
-import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.xperia.models.MutualFundDetailModel;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-@Component
-public class MutualFundDetailConsumer {
+public class MutualFundDetailConsumer implements Runnable{
 
-    @Autowired
-    private MutualFundSchemeDetailService schemeDetailService;
-
+    private final MutualFundSchemeDetailService schemeDetailService;
     private final KafkaConsumer<String, String> consumer;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final Logger LOGGER = LoggerFactory.getLogger(MutualFundDetailConsumer.class);
     private static final List<String> TOPICS_TO_CONSUME = Arrays.asList("scheme_detail");
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final List<MutualFundSchemeDetail> schemeDetails;
     private static final int SCHEME_SAVE_THRESHOLD = 500;
-    private static final long FLUSH_INTERVAL_MS = 5000;
+    private static final long FLUSH_INTERVAL_MS = 20000;
 
-    public MutualFundDetailConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate){
+    public MutualFundDetailConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate, MutualFundSchemeDetailService schemeDetailService){
         this.consumer = new KafkaConsumer<>(kafkaConsumerProperties);
         this.restTemplate = restTemplate;
         this.objectMapper = new ObjectMapper();
+        this.schemeDetailService = schemeDetailService;
         this.schemeDetails = Collections.synchronizedList(new ArrayList<>());
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(this::flushAfterTTL, FLUSH_INTERVAL_MS, FLUSH_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
-    @PostConstruct
-    public void start(){
+    @Override
+    public void run() {
         consumer.subscribe(TOPICS_TO_CONSUME);
-        executorService.submit(() -> {
-            try{
-                while (true){
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
-                    for (ConsumerRecord<String, String> record: records){
-                        String schemeCode = record.value();
-                        String url = "https://api.mfapi.in/mf/" + schemeCode;
-                        MutualFundDetailModel response = restTemplate.getForObject("https://api.mfapi.in/mf/118621", MutualFundDetailModel.class);
-                        MutualFundSchemeDetail fundSchemeDetail = new MutualFundSchemeDetail(response.getMeta().getSchemeCode(),
-                                response.getMeta().getSchemeType(),
-                                response.getMeta().getSchemeCategory(),
-                                response.getMeta().getFundHouse(),
-                                response.getMeta().getSchemeName(),
-                                this.objectMapper.valueToTree(response.getData())
-                        );
-                        createSchemeDetailBatch(fundSchemeDetail);
-                        LOGGER.info("Received scheme : {}", schemeCode);
-                    }
+        try{
+            while (true){
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+                for (ConsumerRecord<String, String> record: records){
+                    String schemeCode = record.value();
+                    String url = "https://api.mfapi.in/mf/" + schemeCode;
+                    MutualFundDetailModel response = restTemplate.getForObject(url, MutualFundDetailModel.class);
+                    MutualFundSchemeDetail fundSchemeDetail = new MutualFundSchemeDetail(response.getMeta().getSchemeCode(),
+                            response.getMeta().getSchemeType(),
+                            response.getMeta().getSchemeCategory(),
+                            response.getMeta().getFundHouse(),
+                            response.getMeta().getSchemeName(),
+                            this.objectMapper.valueToTree(response.getData())
+                    );
+                    createSchemeDetailBatch(fundSchemeDetail);
+                    LOGGER.info("Received scheme : {}", schemeCode);
                 }
-            }catch (Exception ex){
-                LOGGER.error("Error while consuming record from : {}",
-                        TOPICS_TO_CONSUME
-                        .stream()
-                        .reduce((topic1, topic2) -> topic1.concat(",")));
             }
-        });
+        }catch (Exception ex){
+            LOGGER.error("Error while consuming record from : {}",
+                    TOPICS_TO_CONSUME
+                            .stream()
+                            .reduce((topic1, topic2) -> topic1.concat(",")));
+        }
     }
 
     private void createSchemeDetailBatch(MutualFundSchemeDetail schemeDetail){
@@ -106,10 +97,5 @@ public class MutualFundDetailConsumer {
                 flush();
             }
         }
-
-    }
-
-    public void shutdown(){
-        executorService.shutdown();
     }
 }
