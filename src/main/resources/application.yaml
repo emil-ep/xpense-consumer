@@ -13,3 +13,7 @@ spring:
 
 server:
   port: 8089
+
+mutualFund:
+  api:
+    url: "https://api.mfapi.in/mf/"
