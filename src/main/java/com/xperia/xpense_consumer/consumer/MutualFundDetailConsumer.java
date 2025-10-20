@@ -28,8 +28,11 @@ public class MutualFundDetailConsumer implements Runnable{
     private final List<MutualFundSchemeDetail> schemeDetails;
     private static final int SCHEME_SAVE_THRESHOLD = 500;
     private static final long FLUSH_INTERVAL_MS = 20000;
+    private String url;
 
-    public MutualFundDetailConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate, MutualFundSchemeDetailService schemeDetailService){
+    public MutualFundDetailConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate,
+                                    MutualFundSchemeDetailService schemeDetailService, String url){
+        this.url = url;
         this.consumer = new KafkaConsumer<>(kafkaConsumerProperties);
         this.restTemplate = restTemplate;
         this.objectMapper = new ObjectMapper();
@@ -44,10 +47,10 @@ public class MutualFundDetailConsumer implements Runnable{
         consumer.subscribe(TOPICS_TO_CONSUME);
         try{
             while (true){
-                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
                 for (ConsumerRecord<String, String> record: records){
                     String schemeCode = record.value();
-                    String url = "https://api.mfapi.in/mf/" + schemeCode;
+                    String url = this.url + schemeCode;
                     MutualFundDetailModel response = restTemplate.getForObject(url, MutualFundDetailModel.class);
                     MutualFundSchemeDetail fundSchemeDetail = new MutualFundSchemeDetail(response.getMeta().getSchemeCode(),
                             response.getMeta().getSchemeType(),
