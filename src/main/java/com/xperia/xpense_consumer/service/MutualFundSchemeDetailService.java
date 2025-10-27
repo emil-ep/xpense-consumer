@@ -1,6 +1,7 @@
 package com.xperia.xpense_consumer.service;
 
-import com.xperia.xpense_consumer.models.entity.MutualFundSchemeDetail;
+
+import org.xperia.entities.mf.MutualFundSchemeDetail;
 
 import java.util.List;
 

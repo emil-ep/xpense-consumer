@@ -1,7 +1,6 @@
 package com.xperia.xpense_consumer.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xperia.xpense_consumer.models.entity.MutualFundSchemeDetail;
 import com.xperia.xpense_consumer.service.MutualFundSchemeDetailService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -9,6 +8,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
+import org.xperia.entities.mf.MutualFundSchemeDetail;
 import org.xperia.models.MutualFundDetailModel;
 
 import java.time.Duration;
