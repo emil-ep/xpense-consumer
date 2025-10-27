@@ -1,10 +1,10 @@
 package com.xperia.xpense_consumer.service.impl;
 
-import com.xperia.xpense_consumer.models.entity.MutualFundSchemeDetail;
-import com.xperia.xpense_consumer.repository.MutualFundSchemeDetailRepository;
 import com.xperia.xpense_consumer.service.MutualFundSchemeDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.xperia.entities.mf.MutualFundSchemeDetail;
+import org.xperia.repository.mf.MutualFundSchemeDetailRepository;
 
 import java.util.List;
 

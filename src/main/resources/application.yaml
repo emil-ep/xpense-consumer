@@ -2,14 +2,15 @@ spring:
   application:
     name: xpense-consumer
   datasource:
-    url: jdbc:postgresql://localhost:5432/mf
-    username: xpense_admin
-    password: xpenseTracker1234
-    driver-class-name: org.postgresql.Driver
-
+    mf:
+      jdbc-url: jdbc:postgresql://localhost:5432/mf
+      username: xpense_admin
+      password: xpenseTracker1234
+      driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: 8089
