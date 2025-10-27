@@ -1,11 +1,11 @@
 package com.xperia.xpense_consumer.consumer;
 
-import com.xperia.xpense_consumer.service.MutualFundSchemeDetailService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.xperia.service.MutualFundSchemeDetailService;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +24,8 @@ public class MutualFundDetailMultiThreadedConsumer {
     private final ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_CONSUMERS);
 
     @Autowired
-    public MutualFundDetailMultiThreadedConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate, MutualFundSchemeDetailService schemeDetailService){
+    public MutualFundDetailMultiThreadedConsumer(Properties kafkaConsumerProperties, RestTemplate restTemplate,
+                                                 MutualFundSchemeDetailService schemeDetailService){
         this.restTemplate = restTemplate;
         this.kafkaConsumerProperties = kafkaConsumerProperties;
         this.schemeDetailService = schemeDetailService;

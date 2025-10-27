@@ -1,7 +1,6 @@
 package com.xperia.xpense_consumer.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xperia.xpense_consumer.service.MutualFundSchemeService;
 import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -12,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.xperia.entities.mf.MutualFundScheme;
 import org.xperia.models.MutualFundSchemeConsumerModel;
+import org.xperia.service.MutualFundSchemeService;
 
 import java.time.Duration;
 import java.util.ArrayList;
