@@ -5,7 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {
 		"com.xperia.xpense_consumer",
-		"org.xperia.repository"
+		"org.xperia.repository",
+		"org.xperia.service"
 })
 public class XpenseConsumerApplication {
 
