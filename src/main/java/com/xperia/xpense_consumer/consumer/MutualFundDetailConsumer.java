@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import org.xperia.entities.mf.MutualFundSchemeDetail;
 import org.xperia.models.MutualFundDetailModel;
 import org.xperia.service.MutualFundSchemeDetailService;
+import org.xperia.util.MutualFundUtil;
 
 import java.time.Duration;
 import java.util.*;
@@ -52,12 +53,15 @@ public class MutualFundDetailConsumer implements Runnable{
                     String schemeCode = record.value();
                     String url = this.url + schemeCode;
                     MutualFundDetailModel response = restTemplate.getForObject(url, MutualFundDetailModel.class);
+                    Map<String, Double> growthMap = MutualFundUtil.findGrowth(response.getData());
                     MutualFundSchemeDetail fundSchemeDetail = new MutualFundSchemeDetail(response.getMeta().getSchemeCode(),
                             response.getMeta().getSchemeType(),
                             response.getMeta().getSchemeCategory(),
                             response.getMeta().getFundHouse(),
                             response.getMeta().getSchemeName(),
-                            this.objectMapper.valueToTree(response.getData())
+                            this.objectMapper.valueToTree(response.getData()),
+                            growthMap.getOrDefault("growth", 0.0),
+                            growthMap.getOrDefault("growthPercent", 0.0)
                     );
                     createSchemeDetailBatch(fundSchemeDetail);
                     LOGGER.info("Received scheme : {}", schemeCode);
