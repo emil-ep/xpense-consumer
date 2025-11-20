@@ -59,7 +59,7 @@ public class MutualFundDetailConsumer implements Runnable{
                             response.getMeta().getSchemeCategory(),
                             response.getMeta().getFundHouse(),
                             response.getMeta().getSchemeName(),
-                            this.objectMapper.valueToTree(response.getData()),
+                            this.objectMapper.writeValueAsString(response.getData()),
                             growthMap.getOrDefault("growth", 0.0),
                             growthMap.getOrDefault("growthPercent", 0.0)
                     );
