@@ -5,13 +5,16 @@ import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.postgresql.jdbc.TimestampUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.xperia.entities.mf.MutualFundScheme;
 import org.xperia.models.MutualFundSchemeConsumerModel;
+import org.xperia.models.XpenseKafkaTopics;
 import org.xperia.service.MutualFundSchemeService;
+import org.xperia.util.TimeUtil;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -44,8 +47,9 @@ public class MutualFundSchemeConsumer {
     @PostConstruct
     public void start(){
         consumer = new KafkaConsumer<>(consumerProperties);
-        consumer.subscribe(Collections.singletonList("mf_scheme"));
+        consumer.subscribe(Collections.singletonList(XpenseKafkaTopics.MF_SCHEME.getName()));
         List<MutualFundScheme> list = new ArrayList<>();
+
         executorService.submit(() -> {
             try{
                 while (running){
@@ -56,7 +60,7 @@ public class MutualFundSchemeConsumer {
                             MutualFundSchemeConsumerModel model =
                                     objectMapper.readValue(json, MutualFundSchemeConsumerModel.class);
                             MutualFundScheme mfScheme = new MutualFundScheme(model.getSchemeCode(), model.getSchemeName(),
-                                    model.getIsinGrowth(), model.getIsinDivReinvestment());
+                                    model.getIsinGrowth(), model.getIsinDivReinvestment(), TimeUtil.getHourlyTimestamp(System.currentTimeMillis()));
                             list.add(mfScheme);
                             if (list.size() >= BATCH_SIZE){
                                 mutualFundSchemeService.saveAllSchemes(list);

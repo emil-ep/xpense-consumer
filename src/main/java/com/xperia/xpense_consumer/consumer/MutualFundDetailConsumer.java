@@ -9,8 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
 import org.xperia.entities.mf.MutualFundSchemeDetail;
 import org.xperia.models.MutualFundDetailModel;
+import org.xperia.models.XpenseKafkaTopics;
 import org.xperia.service.MutualFundSchemeDetailService;
 import org.xperia.util.MutualFundUtil;
+import org.xperia.util.TimeUtil;
 
 import java.time.Duration;
 import java.util.*;
@@ -23,7 +25,7 @@ public class MutualFundDetailConsumer implements Runnable{
     private final MutualFundSchemeDetailService schemeDetailService;
     private final KafkaConsumer<String, String> consumer;
     private static final Logger LOGGER = LoggerFactory.getLogger(MutualFundDetailConsumer.class);
-    private static final List<String> TOPICS_TO_CONSUME = Arrays.asList("scheme_detail");
+    private static final List<String> TOPICS_TO_CONSUME = Arrays.asList(XpenseKafkaTopics.SCHEME_DETAIL.getName());
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final List<MutualFundSchemeDetail> schemeDetails;
@@ -61,7 +63,8 @@ public class MutualFundDetailConsumer implements Runnable{
                             response.getMeta().getSchemeName(),
                             this.objectMapper.writeValueAsString(response.getData()),
                             growthMap.getOrDefault("growth", 0.0),
-                            growthMap.getOrDefault("growthPercent", 0.0)
+                            growthMap.getOrDefault("growthPercent", 0.0),
+                            TimeUtil.getHourlyTimestamp(System.currentTimeMillis())
                     );
                     createSchemeDetailBatch(fundSchemeDetail);
                     LOGGER.info("Received scheme : {}", schemeCode);
