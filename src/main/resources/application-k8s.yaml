@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    mf:
+      jdbc-url: ${MF_DATASOURCE_URL}
+      username: ${MF_DATASOURCE_USERNAME}
+      password: ${MF_DATASOURCE_PASSWORD}
+
+kafka:
+  bootstrap:
+    server: ${KAFKA_BOOTSTRAP_SERVER}
