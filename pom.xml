@@ -47,6 +47,13 @@
 		</dependency>
 	</dependencies>
 
+	<repositories>
+		<repository>
+			<id>github</id>
+			<url>https://maven.pkg.github.com/emil-ep/xpense-common</url>
+		</repository>
+	</repositories>
+
 	<build>
 		<plugins>
 			<plugin>
