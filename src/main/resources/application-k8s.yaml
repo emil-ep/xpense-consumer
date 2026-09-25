@@ -9,3 +9,8 @@ spring:
 kafka:
   bootstrap:
     server: ${KAFKA_BOOTSTRAP_SERVER}
+
+logging:
+  structured:
+    format:
+      console: ecs
